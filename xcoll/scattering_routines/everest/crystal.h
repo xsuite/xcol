@@ -725,11 +725,13 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
     }
     if (fabs(xp_rel) < xpcrit) {
         double alpha  = xp_rel/xpcrit;
-        double Chann  = sqrt(0.9*(1 - pow(alpha,2.)))*sqrt(1.-(1./ratio)); //Saturation at 95%
         double N_atom = 1.0e-1;
 
         //if they can channel: 2 options
-        if (RandomUniform_generate(part) <= Chann) { //option 1:channeling
+        double saturation = 0.95;
+        double xi1 = RandomUniform_generate(part)*cry_rcurv/(cry_rcurv-Rcrit)/saturation;
+        if (xi1 <= 1 && fabs(xp_rel)/xpcrit <= 2*sqrt(xi1)*sqrt(1-xi1)) {
+            //option 1:channeling
             double TLdech1 = (const_dech*pc)*pow((1.-1./ratio),2.); //Updated calculate typical dech. length(m)
 
             if(RandomUniform_generate(part) <= N_atom) {
@@ -793,10 +795,10 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
                                         exenergy,zatom,rho,anuc);
                     pc = pc - dest*length; //energy loss to ionization [GeV]
                 } else {
-                    double Dxp = tdefl + (0.5*RandomNormal_generate(part))*xpcrit; //Change angle[rad]
-                    
-                    xp  = Dxp;
-                    x = x + L_chan*(sin(0.5*Dxp)); //Trajectory at channeling exit
+                    double xi2 = RandomUniform_generate(part)*2*M_PI;
+                    double t_out = xpcrit*cos(xi2)*sqrt(pow(2*xi1-1, 2) + pow(xp_rel/xpcrit, 2));
+                    xp = tdefl + t_out; //Change angle[rad]
+                    x = x + L_chan*(sin(0.5*xp)); //Trajectory at channeling exit
                     y   = y + s_length * yp;
 
                     dest = calcionloss_cry(part,length,dest,betar,bgr,gammar,tmax,plen,exenergy,zatom,rho,anuc);
@@ -849,6 +851,7 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
 
                 x = x + (0.5*xp)*(s_length - Srefl);
                 y = y + (0.5*yp)*(s_length - Srefl);
+
             } else { //Option 2: VC
                 x = x + xp*Srefl;
                 y = y + yp*Srefl;
@@ -858,8 +861,13 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
                 double tdech   = Ldech/cry_rcurv;
                 double Sdech   = Ldech*cos(xp + 0.5*tdech);
 
+                double xi1 = RandomUniform_generate(part);
+                double xi2 = RandomUniform_generate(part)*2*M_PI;
+                double t_out = xpcrit*cos(xi2)*sqrt(pow(2*xi1-1, 2) + pow(xp_rel/xpcrit, 2));
                 if (Ldech < length-Lrefl) {
                     iProc = proc_DC;
+                    xp = Ldech/cry_rcurv + t_out; //Change angle[rad]
+                    
                     double Dxp   = Ldech/cry_rcurv + (0.5*RandomNormal_generate(part))*xpcrit;
                     x  = x + Ldech*(sin(0.5*Dxp+xp)); //Trajectory at channeling exit
                     y     = y + Sdech*yp;
@@ -926,7 +934,7 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
                         double Dxp = (length-Lrefl)/cry_rcurv;
                         x = x + sin(0.5*Dxp+xp)*Rlength; //Trajectory at channeling exit
                         y   = y + Red_S*yp;
-                        xp  = tdefl + (0.5*RandomNormal_generate(part))*xpcrit; //[mrad]
+                        xp  = tdefl + t_out; //[mrad]
 
                         dest = calcionloss_cry(part,Rlength,dest,betar,bgr,gammar,tmax,plen,
                                             exenergy,zatom,rho,anuc);
