@@ -724,7 +724,6 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
         xpcrit  = xpcrit*0.98;
     }
     if (fabs(xp_rel) < xpcrit) {
-        double alpha  = xp_rel/xpcrit;
         double N_atom = 1.0e-1;
 
         //if they can channel: 2 options
@@ -864,11 +863,10 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
                 double xi1 = RandomUniform_generate(part);
                 double xi2 = RandomUniform_generate(part)*2*M_PI;
                 double t_out = xpcrit*cos(xi2)*sqrt(pow(2*xi1-1, 2) + pow(xp_rel/xpcrit, 2));
+                t_out = (0.5*RandomNormal_generate(part))*xpcrit;
                 if (Ldech < length-Lrefl) {
                     iProc = proc_DC;
-                    xp = Ldech/cry_rcurv + t_out; //Change angle[rad]
-                    
-                    double Dxp   = Ldech/cry_rcurv + (0.5*RandomNormal_generate(part))*xpcrit;
+                    double Dxp   = Ldech/cry_rcurv + t_out;
                     x  = x + Ldech*(sin(0.5*Dxp+xp)); //Trajectory at channeling exit
                     y     = y + Sdech*yp;
                     xp    =  Dxp;
