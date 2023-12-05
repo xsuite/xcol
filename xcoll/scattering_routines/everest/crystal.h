@@ -693,29 +693,31 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
     
     //THIRD CASE: the p interacts with the crystal.
     //Define typical angles/probabilities for orientation 110
-    double xpcrit0 = sqrt((2.0e-9*eUm)/pc);   //Critical angle (rad) for straight crystals
-    double Rcrit   = (pc/(2.0e-6*eUm))*ai; //Critical curvature radius [m]
+    double xc      = ai*1.e-3*0.95;               // 95% saturation
+    double Rcrit   = pc*1.e9/(2.0*eUm)*xc;  // Critical curvature radius [m]
+    double xpcrit0 = sqrt(2.0e-9*eUm/pc); // Critical angle (rad) for straight crystals
 
     //If R>Rcritical=>no channeling is possible (ratio<1)
     double ratio  = cry_rcurv/Rcrit;
-    double xpcrit = (xpcrit0*(cry_rcurv-Rcrit))/cry_rcurv; //Critical angle for curved crystal
+    double xpcrit = xpcrit0*(1-Rcrit/cry_rcurv); //Critical angle for curved crystal
+    double lambda = sqrt(xc*Rcrit);  // absorbed factor 2pi
 
     double Ang_rms;
     double Ang_avr;
     double Vcapt;
     if (ratio <= 1.) { //no possibile channeling
-        Ang_rms = ((c_v1*0.42)*xpcrit0)*sin(1.4*ratio); //RMS scattering
-        Ang_avr = ((c_v2*xpcrit0)*5.0e-2)*ratio;                         //Average angle reflection
-        Vcapt   = 0.;                                                //Probability of VC
+        Ang_rms = c_v1*0.42*xpcrit0*sin(1.4*ratio);           // RMS scattering
+        Ang_avr = c_v2*xpcrit0*5.0e-2*ratio;                  // Average angle reflection
+        Vcapt   = 0.;                                         // Probability of VC
     } else if (ratio <= 3.) { //Strongly bent crystal
-        Ang_rms = ((c_v1*0.42)*xpcrit0)*sin(0.4713*ratio + 0.85); //RMS scattering
-        Ang_avr = (c_v2*xpcrit0)*(0.1972*ratio - 0.1472);                  //Average angle reflection
-        Vcapt   = 7.0e-4*(ratio - 0.7)/pow(pc,2.0e-1);                           //Correction by sasha drozdin/armen
+        Ang_rms = c_v1*0.42*xpcrit0*sin(0.4713*ratio + 0.85); // RMS scattering
+        Ang_avr = c_v2*xpcrit0*(0.1972*ratio - 0.1472);       // Average angle reflection
+        Vcapt   = 7.0e-4*(ratio - 0.7)/pow(pc,2.0e-1);        // Correction by sasha drozdin/armen
         //K=0.0007 is taken based on simulations using CATCH.f (V.Biryukov)
     } else { //Rcry >> Rcrit
-        Ang_rms = (c_v1*xpcrit0)*(1./ratio);                //RMS scattering
-        Ang_avr = (c_v2*xpcrit0)*(1. - 1.6667/ratio); //Average angle for VR
-        Vcapt   = 7.0e-4*(ratio - 0.7)/pow(pc,2.0e-1); //Probability for VC correction by sasha drozdin/armen
+        Ang_rms = c_v1*xpcrit0/ratio;                         // RMS scattering
+        Ang_avr = c_v2*xpcrit0*(1. - 1.6667/ratio);           // Average angle for VR
+        Vcapt   = 7.0e-4*(ratio - 0.7)/pow(pc,2.0e-1);        // Probability for VC correction by sasha drozdin/armen
         //K=0.0007 is taken based on simulations using CATCH.f (V.Biryukov)
     }
     if (cry_orient == 2) {
@@ -724,15 +726,14 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
         xpcrit  = xpcrit*0.98;
     }
     if (fabs(xp_rel) < xpcrit) {
-        double N_atom = 1.0e-1;
 
         //if they can channel: 2 options
-        double saturation = 0.95;
-        double xi1 = RandomUniform_generate(part)*cry_rcurv/(cry_rcurv-Rcrit)/saturation;
+        double xi1 = RandomUniform_generate(part)*cry_rcurv/(cry_rcurv-Rcrit)*ai/xc;
         if (xi1 <= 1 && fabs(xp_rel)/xpcrit <= 2*sqrt(xi1)*sqrt(1-xi1)) {
             //option 1:channeling
-            double TLdech1 = (const_dech*pc)*pow((1.-1./ratio),2.); //Updated calculate typical dech. length(m)
 
+            double TLdech1 = (const_dech*pc)*pow((1.-1./ratio),2.); //Updated calculate typical dech. length(m)
+            double N_atom = 1.0e-1;
             if(RandomUniform_generate(part) <= N_atom) {
                 TLdech1 = ((const_dech/2.0e2)*pc)*pow((1.-1./ratio),2.);  //Updated dechanneling length (m)      
             }
@@ -746,8 +747,8 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
                 double Dxp   = Ldech/r; //Change angle from channeling [mrad]
                 double Sdech = Ldech*cos(cry_miscut + 0.5*Dxp);
                 x  = x  + Ldech*(sin(0.5*Dxp+cry_miscut)); //Trajectory at channeling exit
-                xp    = xp + Dxp + (2*(RandomUniform_generate(part)-0.5))*xpcrit;
-                y     = y  + yp * Sdech;
+                xp = xp + Dxp + (2*(RandomUniform_generate(part)-0.5))*xpcrit;
+                y  = y  + yp * Sdech;
 
                 dest = calcionloss_cry(part,Ldech,dest,betar,bgr,gammar,tmax,plen,
                                     exenergy,zatom,rho,anuc);
@@ -795,7 +796,9 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
                     pc = pc - dest*length; //energy loss to ionization [GeV]
                 } else {
                     double xi2 = RandomUniform_generate(part)*2*M_PI;
-                    double t_out = xpcrit*cos(xi2)*sqrt(pow(2*xi1-1, 2) + pow(xp_rel/xpcrit, 2));
+//                     double t_out = xpcrit*cos(xi2)*sqrt(pow(2*xi1-1, 2) + pow(xp_rel/xpcrit, 2));
+                    double t_out = xp_rel*cos(L_chan/lambda) - xpcrit*(2*xi1-1)*sin(L_chan/lambda);
+//                     t_out = xp_rel*cos(xi2) - xpcrit*(2*xi1-1)*sin(xi2);
                     xp = tdefl + t_out; //Change angle[rad]
                     x = x + L_chan*(sin(0.5*xp)); //Trajectory at channeling exit
                     y   = y + s_length * yp;
