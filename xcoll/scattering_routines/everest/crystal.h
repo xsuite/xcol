@@ -728,7 +728,7 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
     if (fabs(xp_rel) < xpcrit) {
 
         //if they can channel: 2 options
-        double xi1 = RandomUniform_generate(part)*cry_rcurv/(cry_rcurv-Rcrit)*ai/xc;
+        double xi1 = RandomUniform_generate(part)*cry_rcurv/(cry_rcurv-Rcrit)*ai*1.e-3/xc;
         if (xi1 <= 1 && fabs(xp_rel)/xpcrit <= 2*sqrt(xi1)*sqrt(1-xi1)) {
             //option 1:channeling
 
@@ -797,8 +797,8 @@ double* interact(RandomRutherfordData rng, LocalParticle* part, double x, double
                 } else {
                     double xi2 = RandomUniform_generate(part)*2*M_PI;
 //                     double t_out = xpcrit*cos(xi2)*sqrt(pow(2*xi1-1, 2) + pow(xp_rel/xpcrit, 2));
-                    double t_out = xp_rel*cos(L_chan/lambda) - xpcrit*(2*xi1-1)*sin(L_chan/lambda);
-//                     t_out = xp_rel*cos(xi2) - xpcrit*(2*xi1-1)*sin(xi2);
+//                     double t_out = xp_rel*cos(L_chan/lambda) - xpcrit*(2*xi1-1)*sin(L_chan/lambda);
+                    double t_out = xp_rel*cos(xi2) - xpcrit*(2*xi1-1)*sin(xi2);
                     xp = tdefl + t_out; //Change angle[rad]
                     x = x + L_chan*(sin(0.5*xp)); //Trajectory at channeling exit
                     y   = y + s_length * yp;
