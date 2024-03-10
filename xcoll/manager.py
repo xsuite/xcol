@@ -597,6 +597,28 @@ class CollimatorManager:
                     + [ x is None for x in self.colldb._colldb.jaw_RD]
                 )
 
+    def generate_2D_pencil_one_jaw(self, num_particles, collimator, plane, side, impact_parameter,
+                                   pencil_spread, tw, front=True):
+        coll = self.line[collimator]
+        if plane == 'x':
+            co_pencil     = coll.ref_x
+        elif plane == 'y':
+            co_pencil     = coll.ref_y
+        else:
+            raise ValueError("`plane` must be either 'x' or 'y'!")
+        if side == '+':
+            absolute_cut = coll.jaw_LU + co_pencil + impact_parameter + pencil_spread
+        elif side == '-':
+            absolute_cut = coll.jaw_RU + co_pencil - impact_parameter - pencil_spread
+        else:
+            raise ValueError("`side` must be either '+' or '-'!")
+        optics = tw.rows[collimator:f'{collimator}%%1']
+        alfa = optics[f'alf{plane}'][0] if front else optics[f'alf{plane}'][1]
+        beta = optics[f'bet{plane}'][0] if front else optics[f'bet{plane}'][1]
+        gama = optics[f'gam{plane}'][0] if front else optics[f'gam{plane}'][1]
+        particle_emitt = absolute_cut**2 / beta
+
+
 
     def _generate_4D_pencil_one_jaw(self, num_particles, collimator, plane, side, impact_parameter,
                                     dr_sigmas, transverse_spread_sigma, match_at_s):
