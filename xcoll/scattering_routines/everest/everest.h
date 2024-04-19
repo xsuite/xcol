@@ -7,6 +7,9 @@
 #define XCOLL_EVEREST_ENGINE_H
 
 
+#define XCOLL_TRANSITION
+
+
 typedef struct EverestCollData_ {
     // Collimator properties
     double aperture;   // TODO: This should go out, as it's geometry and that should not be used in Everest scattering
