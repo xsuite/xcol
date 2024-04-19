@@ -80,8 +80,9 @@ void calculate_critical_angle(EverestData restrict everest, LocalParticle* part,
     // Define typical angles/probabilities for orientation 110
     double eum   = everest->coll->eum;
     double ai    = everest->coll->ai;
-    double t_c0  = sqrt(2.e-9*eum/pc); // Critical angle (rad) for straight crystals   // pc is actually beta pc
-    double Rcrit = pc/(2.e-6*eum)*ai;  // Critical curvature radius [m]                // pc is actually beta pc
+    double eta   = 0.9;
+    double t_c0  = sqrt(2.e-9*eta*eum/pc); // Critical angle (rad) for straight crystals   // pc is actually beta pc
+    double Rcrit = pc/(2.e-6*sqrt(eta)*eum)*ai;  // Critical curvature radius [m]                // pc is actually beta pc
 
     // If Rcritical > R => no channeling is possible (Rc_over_R > 1)
     everest->Rc_over_R = Rcrit / everest->coll->bend_r;

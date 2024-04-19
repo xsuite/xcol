@@ -147,7 +147,7 @@ double Channel(EverestData restrict everest, LocalParticle* part, double pc, dou
     // sqrt(1 - pow(alpha,2.))*(1. - ratio) for the crystal parameters from the experiment.
 //     Saturation at 95%
 //     double Chann  = sqrt(0.9*(1 - pow(alpha,2.))*(1. - ratio));
-    double Chann = sqrt(0.9)*sqrt(1 - pow(alpha,2.))*sqrt(1. - ratio);
+    double Chann = sqrt(1 - pow(alpha,2.))*(1. - ratio);
 
     if (RandomUniform_generate(part) > Chann) {
 #ifdef XCOLL_TRANSITION
