@@ -146,20 +146,11 @@ double Channel(EverestData restrict everest, LocalParticle* part, CrystalGeometr
     double xi = RandomUniform_generate(part)/(1 - ratio)/sqrt(everest->coll->eta);
 
     if (xi > 1 || alpha > 2*sqrt(xi)*sqrt(1-xi)) {
-#ifdef XCOLL_TRANSITION
-        // TRANSITION
-        // We feel that this transition is not needed, as it interpolates between two regions
-        // (adding a slant below the channeling region) which does not seem to be present in
-        // experimental data.
-#ifdef XCOLL_REFINE_ENERGY
-        calculate_VI_parameters(everest, part, pc);
-#endif
-        volume_reflection(everest, part, XC_VOLUME_REFLECTION_TRANS_CH);
-#endif
+        // No channelling
         pc = Amorphous(everest, part, cg, pc, length, 1);
 
     } else {
-        // CHANNEL
+        // Channelling
         calculate_opening_angle(everest, part, cg);
         double t_I = everest->t_I;
         double t_P = everest->t_P;
