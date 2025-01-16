@@ -12,8 +12,7 @@ import xtrack as xt
 import xcoll as xc
 
 from xpart.test_helpers import flaky_assertions, retry
-from xobjects.test_helpers import for_all_test_contexts
-
+from xobjects.test_helpers import for_all_test_contexts, fix_random_seed
 
 n_part = int(2.e6)
 
@@ -168,6 +167,7 @@ def _generate_particles(four_dim=False, angle=0, _context=None):
 @for_all_test_contexts(
     excluding=('ContextCupy', 'ContextPyopencl')  # BlackAbsorber not on GPU
 )
+@fix_random_seed(3482634)
 def test_black_crystal(test_context, side, sign_R):
     ref = xp.Particles(mass0=xp.PROTON_MASS_EV, q0=1, p0c=7e12)
     x = np.random.uniform(-1, 1, n_part)
